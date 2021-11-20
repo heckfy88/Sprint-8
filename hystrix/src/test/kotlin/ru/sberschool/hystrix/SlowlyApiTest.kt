@@ -15,7 +15,7 @@ import java.util.concurrent.TimeUnit
 import kotlin.test.assertEquals
 
 class SlowlyApiTest {
-    val client = HystrixFeign.builder()
+    private val client: SlowlyApi = HystrixFeign.builder()
         .client(ApacheHttpClient())
         .decoder(JacksonDecoder())
         // для удобства тестирования задаем таймауты на 1 секунду
@@ -34,23 +34,39 @@ class SlowlyApiTest {
         mockServer.stop()
     }
 
+
     @Test
-    fun `getSomething() should return predefined data`() {
-        // given
+    fun fallbackScenarioTest() {
         MockServerClient("127.0.0.1", 18080)
             .`when`(
-                // задаем матчер для нашего запроса
-                HttpRequest.request()
+                HttpRequest
+                    .request()
                     .withMethod("GET")
                     .withPath("/")
             )
             .respond(
-                // наш запрос попадает на таймаут
-                HttpResponse.response()
+                HttpResponse
+                    .response()
                     .withStatusCode(400)
-                    .withDelay(TimeUnit.SECONDS, 30) //
+                    .withDelay(TimeUnit.SECONDS, 30)
+                    .withBody("{  \"name\": \"cheri\" }")
             )
-        // expect
-        assertEquals("predefined data", client.getSomething().data)
+        assertEquals("fallback", client.getBerry().name)
+    }
+
+    @Test
+    fun okScenarioTest() {
+        MockServerClient("127.0.0.1", 18080)
+            .`when`(
+                HttpRequest.request()
+                    .withMethod("GET")
+                    .withPath("/berry/cheri")
+            )
+            .respond(
+                HttpResponse.response()
+                    .withStatusCode(200)
+                    .withBody("{  \"name\": \"cheri\" }")
+            )
+        assertEquals("cheri", client.getBerry().name)
     }
 }
