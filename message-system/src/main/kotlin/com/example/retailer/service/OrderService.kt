@@ -43,7 +43,6 @@ class OrderService {
      * Обновление заказа
      * Должно быть вызвано после получения каждого уведомления от дистрибьютора
      */
-    fun updateOrderInfo(orderInfo: OrderInfo) : Boolean {
-        return orderStorage.updateOrder(orderInfo)
-    }
+    fun updateOrderInfo(orderInfo: OrderInfo) : Boolean = orderStorage.updateOrder(orderInfo)
+
 }
